@@ -238,7 +238,7 @@ def find_v110_frames(bslen, bytestream, n):
       count = 0
 
     # find nosynch of frames
-
+ 
     # count and skip 0xFF
     for framestart in range(framestart, stream_end[n]+1):
       if stream[n][framestart] == 255:
@@ -252,6 +252,7 @@ def find_v110_frames(bslen, bytestream, n):
       else:
         stream_end[n] = 0
         print('this is unexpected')
+        out[n].write('this is unexpected')
       return
 
     # count 0x7F, skip all but 8
@@ -288,12 +289,14 @@ def find_v110_frames(bslen, bytestream, n):
       # check for odd bytes within possible frame
       for i in range(framestart+8, stream_end[n]+1):
         if stream[n][i] != 255 and stream[n][i] != 127:
-          # found, increase framestart and nosync and continue
+          # found, increase framestart and nosync and break this for
           nosync += i - framestart
           framestart = i
-          continue
+          break
         if i >= framestart + 79:
           break
+      if stream[n][i] != 255 and stream[n][i] != 127:
+        continue #continue outside loop
       if i < framestart + 79: # not enough bytes to do something usefull, cleanup and return
         if nosync:
           stream[n][1] = -nosync # store number of nosyn bytes
@@ -310,11 +313,13 @@ def find_v110_frames(bslen, bytestream, n):
       for i in range(1, 10):                                          
         if  stream[n][framestart+i*8] != 255: # not a frame
           if i == 1:
+            print('unexpected 0 as this byte is already checked to be 1\n')
             out[n].write('unexpected 0 as this byte is already checked to be 1\n')
-            framestart += (i-1)*8 + 1 # right behind last found FF is first chance for finding 8 x 7F
-            nosync += (i-1)*8 + 1
+            framestart += 8
+            nosync += 8
           else:
-            framestart += (i-1)*8 + 1 # right behind last found FF is first chance for finding 8 x 7F
+            # right behind last found FF is first chance for finding 8 x 7F
+            framestart += (i-1)*8 + 1
             nosync += (i-1)*8 + 1
           break
       else: # end of for, no break so frame found
@@ -329,6 +334,7 @@ def find_v110_frames(bslen, bytestream, n):
           frame[j] = stream[n][framestart + j - 1] >> 7
         check_v110_frame(frame, n)
         framestart += 80
+  # clean out of while loop, all bytes handled, zero bytes left
   stream_end[n] = 0 # just ended at the end of a frame
 
 
@@ -359,8 +365,10 @@ def read_bytes_from_QATS_file(fn):
     extra_length = read_t_UI8(f)
     for b in range(0, extra_length):
       read_t_UI8(f)
-    if record_lengt - 13 - extra_length == 68:
-      n = '{:04X}'.format(source_Id)
+    n = '{:04X}'.format(source_Id)
+    if a == 0:
+      bytess = list(range(200))  
+    if (n in out) or (record_lengt - 13 - extra_length == 68) and n != '1620' and n != '1630' and n != '2620' and n != '2630' and n != '1630' and n != '0E20' and n != '0E30' and n != '1630' and n != '1220' and n != '1230':
       if not (n in out):
         row[n] = 1
         col[n] = 1
@@ -376,16 +384,16 @@ def read_bytes_from_QATS_file(fn):
         out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
         nx += 1
         nn[nx] = n
+      else:
+        if (record_lengt - 13 - extra_length != 68):
+          print(n, record_lengt - 13 - extra_length)
       if row[n] != idrow[n]:
         out[n].write(str(record_number) + '\t' + str(datetime.datetime.fromtimestamp((file_Timestamp + relative_timestamp)//1000).strftime('%Y-%m-%d %H:%M:%S')) + '.%03d' % ((file_Timestamp + relative_timestamp)%1000) + '\t')
         col[n] = 3
         idrow[n] = row[n]
-      for i in range(0, 68):
-        if a == 0:
-          bytess.append(read_t_UI8(f))
-        else:  
-          bytess[i] = read_t_UI8(f)
-      find_v110_frames(68, bytess, n)
+      for i in range(0, record_lengt - 13 - extra_length):
+        bytess[i] = read_t_UI8(f)
+      find_v110_frames(record_lengt - 13 - extra_length, bytess, n)
     else: # still read but not store
       for a in range(0, record_lengt - 13 - extra_length):
         read_t_UI8(f)
@@ -440,8 +448,6 @@ def read_bytes_from_NetHawk_file(fn):
         nn[nx] = n
       if row[n] != idrow[n]:
         out[n].write(str(logid) + '\t' + date[5:] + " " + time + '\t')
-        if logid == 'Id:18974':
-          print(logid)
         col[n] = 3
         idrow[n] = row[n]
       speech = f.readline()
