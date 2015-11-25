@@ -26,63 +26,125 @@ def read_t_UI64(f):
   return (next(read_byte(f)) + (next(read_byte(f)) << 8) + (next(read_byte(f)) << 16) + (next(read_byte(f)) << 24)
           + (next(read_byte(f)) << 32) + (next(read_byte(f)) << 40) + (next(read_byte(f)) << 48) + (next(read_byte(f)) << 56))
 
-
 def check_bitstream(b, n):
-  if bitstream_end[n] + 48 > bitstream_max_end[n]:
-    for bitstream_max_end[n] in range(bitstream_max_end[n], bitstream_end[n] + 48):
-      bitstream[n].append(0)
-  bitstream[n][bitstream_end[n]] = b[1*8+2] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[1*8+3] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[1*8+4] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[1*8+5] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[1*8+6] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[1*8+7] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[2*8+2] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[2*8+3] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[2*8+4] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[2*8+5] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[2*8+6] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[2*8+7] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[3*8+2] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[3*8+3] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[3*8+4] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[3*8+5] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[3*8+6] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[3*8+7] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[4*8+2] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[4*8+3] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[4*8+4] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[4*8+5] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[4*8+6] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[4*8+7] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[6*8+2] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[6*8+3] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[6*8+4] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[6*8+5] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[6*8+6] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[6*8+7] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[7*8+2] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[7*8+3] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[7*8+4] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[7*8+5] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[7*8+6] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[7*8+7] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[8*8+2] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[8*8+3] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[8*8+4] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[8*8+5] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[8*8+6] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[8*8+7] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[9*8+2] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[9*8+3] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[9*8+4] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[9*8+5] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[9*8+6] ; bitstream_end[n] += 1
-  bitstream[n][bitstream_end[n]] = b[9*8+7] ; bitstream_end[n] += 1
-  for i in range(bitstream_end[n]-48, bitstream_end[n]):
-    out[n].write(str(bitstream[n][i]))
-  out[n].write("\t") ; col[n] += 1
-
+  if (bit_rate%4800 == 0):
+    if bitstream_end[n] + 48 > bitstream_max_end[n]:
+      for bitstream_max_end[n] in range(bitstream_max_end[n], bitstream_end[n] + 48):
+        bitstream[n].append(0)
+    bitstream[n][bitstream_end[n]] = b[1*8+2] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[1*8+3] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[1*8+4] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[1*8+5] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[1*8+6] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[1*8+7] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[2*8+2] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[2*8+3] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[2*8+4] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[2*8+5] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[2*8+6] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[2*8+7] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[3*8+2] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[3*8+3] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[3*8+4] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[3*8+5] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[3*8+6] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[3*8+7] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[4*8+2] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[4*8+3] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[4*8+4] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[4*8+5] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[4*8+6] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[4*8+7] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[6*8+2] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[6*8+3] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[6*8+4] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[6*8+5] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[6*8+6] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[6*8+7] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[7*8+2] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[7*8+3] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[7*8+4] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[7*8+5] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[7*8+6] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[7*8+7] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[8*8+2] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[8*8+3] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[8*8+4] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[8*8+5] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[8*8+6] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[8*8+7] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[9*8+2] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[9*8+3] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[9*8+4] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[9*8+5] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[9*8+6] ; bitstream_end[n] += 1
+    bitstream[n][bitstream_end[n]] = b[9*8+7] ; bitstream_end[n] += 1
+    for i in range(bitstream_end[n]-48, bitstream_end[n]):
+      out[n].write(str(bitstream[n][i]))
+    out[n].write("\t") ; col[n] += 1
+  elif (bit_rate == 2400):
+    if bitstream_end[n] + 24 > bitstream_max_end[n]:
+      for bitstream_max_end[n] in range(bitstream_max_end[n], bitstream_end[n] + 24):
+        bitstream[n].append(0)
+    bitstream[n][bitstream_end[n]] = b[1*8+2] ; bitstream_end[n] += 1 #b[1*8+3]
+    bitstream[n][bitstream_end[n]] = b[1*8+4] ; bitstream_end[n] += 1 #b[1*8+5]
+    bitstream[n][bitstream_end[n]] = b[1*8+6] ; bitstream_end[n] += 1 #b[1*8+7]
+    bitstream[n][bitstream_end[n]] = b[2*8+2] ; bitstream_end[n] += 1 #b[2*8+3]
+    bitstream[n][bitstream_end[n]] = b[2*8+4] ; bitstream_end[n] += 1 #b[2*8+5]
+    bitstream[n][bitstream_end[n]] = b[2*8+6] ; bitstream_end[n] += 1 #b[2*8+7]
+    bitstream[n][bitstream_end[n]] = b[3*8+2] ; bitstream_end[n] += 1 #b[3*8+3]
+    bitstream[n][bitstream_end[n]] = b[3*8+4] ; bitstream_end[n] += 1 #b[3*8+5]
+    bitstream[n][bitstream_end[n]] = b[3*8+6] ; bitstream_end[n] += 1 #b[3*8+7]
+    bitstream[n][bitstream_end[n]] = b[4*8+2] ; bitstream_end[n] += 1 #b[4*8+3]
+    bitstream[n][bitstream_end[n]] = b[4*8+4] ; bitstream_end[n] += 1 #b[4*8+5]
+    bitstream[n][bitstream_end[n]] = b[4*8+6] ; bitstream_end[n] += 1 #b[4*8+7]
+    bitstream[n][bitstream_end[n]] = b[6*8+2] ; bitstream_end[n] += 1 #b[6*8+3]
+    bitstream[n][bitstream_end[n]] = b[6*8+4] ; bitstream_end[n] += 1 #b[6*8+5]
+    bitstream[n][bitstream_end[n]] = b[6*8+6] ; bitstream_end[n] += 1 #b[6*8+7]
+    bitstream[n][bitstream_end[n]] = b[7*8+2] ; bitstream_end[n] += 1 #b[7*8+3]
+    bitstream[n][bitstream_end[n]] = b[7*8+4] ; bitstream_end[n] += 1 #b[7*8+5]
+    bitstream[n][bitstream_end[n]] = b[7*8+6] ; bitstream_end[n] += 1 #b[7*8+7]
+    bitstream[n][bitstream_end[n]] = b[8*8+2] ; bitstream_end[n] += 1 #b[8*8+3]
+    bitstream[n][bitstream_end[n]] = b[8*8+4] ; bitstream_end[n] += 1 #b[8*8+5]
+    bitstream[n][bitstream_end[n]] = b[8*8+6] ; bitstream_end[n] += 1 #b[8*8+7]
+    bitstream[n][bitstream_end[n]] = b[9*8+2] ; bitstream_end[n] += 1 #b[9*8+3]
+    bitstream[n][bitstream_end[n]] = b[9*8+4] ; bitstream_end[n] += 1 #b[9*8+5]
+    bitstream[n][bitstream_end[n]] = b[9*8+6] ; bitstream_end[n] += 1 #b[9*8+7]
+    for i in range(bitstream_end[n]-24, bitstream_end[n]):
+      out[n].write(str(bitstream[n][i]))
+    out[n].write("\t") ; col[n] += 1
+  elif (bit_rate == 1200):
+    if bitstream_end[n] + 12 > bitstream_max_end[n]:
+      for bitstream_max_end[n] in range(bitstream_max_end[n], bitstream_end[n] + 12):
+        bitstream[n].append(0)
+    bitstream[n][bitstream_end[n]] = b[1*8+2] ; bitstream_end[n] += 1 #b[1*8+3] b[1*8+4] b[1*8+5]
+    bitstream[n][bitstream_end[n]] = b[1*8+6] ; bitstream_end[n] += 1 #b[1*8+7] b[2*8+2] b[2*8+3]
+    bitstream[n][bitstream_end[n]] = b[2*8+4] ; bitstream_end[n] += 1 #b[2*8+5] b[2*8+6] b[2*8+7]
+    bitstream[n][bitstream_end[n]] = b[3*8+2] ; bitstream_end[n] += 1 #b[3*8+3] b[3*8+4] b[3*8+5]
+    bitstream[n][bitstream_end[n]] = b[3*8+6] ; bitstream_end[n] += 1 #b[3*8+7] b[4*8+2] b[4*8+3]
+    bitstream[n][bitstream_end[n]] = b[4*8+4] ; bitstream_end[n] += 1 #b[4*8+5] b[4*8+6] b[4*8+7]
+    bitstream[n][bitstream_end[n]] = b[6*8+2] ; bitstream_end[n] += 1 #b[6*8+3] b[6*8+4] b[6*8+5]
+    bitstream[n][bitstream_end[n]] = b[6*8+6] ; bitstream_end[n] += 1 #b[6*8+7] b[7*8+2] b[7*8+3]
+    bitstream[n][bitstream_end[n]] = b[7*8+4] ; bitstream_end[n] += 1 #b[7*8+5] b[7*8+6] b[7*8+7]
+    bitstream[n][bitstream_end[n]] = b[8*8+2] ; bitstream_end[n] += 1 #b[8*8+3] b[8*8+4] b[8*8+5]
+    bitstream[n][bitstream_end[n]] = b[8*8+6] ; bitstream_end[n] += 1 #b[8*8+7] b[9*8+2] b[9*8+3]
+    bitstream[n][bitstream_end[n]] = b[9*8+4] ; bitstream_end[n] += 1 #b[9*8+5] b[9*8+6] b[9*8+7]
+    for i in range(bitstream_end[n]-12, bitstream_end[n]):
+      out[n].write(str(bitstream[n][i]))
+    out[n].write("\t") ; col[n] += 1
+  elif (bit_rate == 600):
+    if bitstream_end[n] + 6 > bitstream_max_end[n]:
+      for bitstream_max_end[n] in range(bitstream_max_end[n], bitstream_end[n] + 6):
+        bitstream[n].append(0)
+    bitstream[n][bitstream_end[n]] = b[1*8+2] ; bitstream_end[n] += 1 #b[1*8+3] b[1*8+4] b[1*8+5] b[1*8+6] b[1*8+7] b[2*8+2] b[2*8+3]
+    bitstream[n][bitstream_end[n]] = b[2*8+4] ; bitstream_end[n] += 1 #b[2*8+5] b[2*8+6] b[2*8+7] b[3*8+2] b[3*8+3] b[3*8+4] b[3*8+5]
+    bitstream[n][bitstream_end[n]] = b[3*8+6] ; bitstream_end[n] += 1 #b[3*8+7] b[4*8+2] b[4*8+3] b[4*8+4] b[4*8+5] b[4*8+6] b[4*8+7]
+    bitstream[n][bitstream_end[n]] = b[6*8+2] ; bitstream_end[n] += 1 #b[6*8+3] b[6*8+4] b[6*8+5] b[6*8+6] b[6*8+7] b[7*8+2] b[7*8+3]
+    bitstream[n][bitstream_end[n]] = b[7*8+4] ; bitstream_end[n] += 1 #b[7*8+5] b[7*8+6] b[7*8+7] b[8*8+2] b[8*8+3] b[8*8+4] b[8*8+5]
+    bitstream[n][bitstream_end[n]] = b[8*8+6] ; bitstream_end[n] += 1 #b[8*8+7] b[9*8+2] b[9*8+3] b[9*8+4] b[9*8+5] b[9*8+6] b[9*8+7]
+    for i in range(bitstream_end[n]-6, bitstream_end[n]):
+      out[n].write(str(bitstream[n][i]))
+    out[n].write("\t") ; col[n] += 1
   # count zeroes, display and store
   # count ones, keep one
   # get byte, display position to stopbit
@@ -166,25 +228,24 @@ def check_bitstream(b, n):
         out[n].write('\\x' + '{:02x}'.format(i))
     out[n].write('"')  
   
-
 def check_v110_frame(f, n):
-    for col[n] in range(col[n], 3):
-      out[n].write('\t')
-    col[n] = 3  
-    out[n].write('frame\t') ; col[n] += 1
-    out[n].write(str(f[1*8+8]) + str(f[3*8+8]) + str(f[6*8+8]) + str(f[8*8+8]))  # S1,S3,S6,S8
-    out[n].write('\t') ; col[n] += 1
-    out[n].write(str(f[4*8+8]) + str(f[9*8+8]))  # S4,S9
-    out[n].write('\t') ; col[n] += 1
-    out[n].write(str(f[2*8+8]) + str(f[7*8+8]))  # X2,X7
-    out[n].write('\t') ; col[n] += 1
-    out[n].write(str(f[5*8+2]) + str(f[5*8+3]) + str(f[5*8+4]) + str(f[5*8+5]) + str(f[5*8+6]) + str(f[5*8+7]) + str(f[5*8+8]))  # 011 E4-E7
-    out[n].write('\t') ; col[n] += 1
-    check_bitstream(f, n)
-    out[n].write('\n') ; col[n] = 1 ; row[n] += 1
+  for col[n] in range(col[n], 3):
+    out[n].write('\t')
+  col[n] = 3  
+  out[n].write('frame\t') ; col[n] += 1
+  out[n].write(str(f[1*8+8]) + str(f[3*8+8]) + str(f[6*8+8]) + str(f[8*8+8]))  # S1,S3,S6,S8
+  out[n].write('\t') ; col[n] += 1
+  out[n].write(str(f[4*8+8]) + str(f[9*8+8]))  # S4,S9
+  out[n].write('\t') ; col[n] += 1
+  out[n].write(str(f[2*8+8]) + str(f[7*8+8]))  # X2,X7
+  out[n].write('\t') ; col[n] += 1
+  out[n].write(str(f[5*8+2]) + str(f[5*8+3]) + str(f[5*8+4]) + str(f[5*8+5]) + str(f[5*8+6]) + str(f[5*8+7]) + str(f[5*8+8]))  # 011 E4-E7
+  out[n].write('\t') ; col[n] += 1
+  check_bitstream(f, n)
+  out[n].write('\n') ; col[n] = 1 ; row[n] += 1
     
-
-def find_v110_frames(bslen, bytestream, n):
+def adapted_find_v110_frames(bslen, bytestream, n):
+  #for ALL baud rates transparant asynchronous
   frame = {}
   #
   # copy new values to pool
@@ -196,21 +257,16 @@ def find_v110_frames(bslen, bytestream, n):
       stream_max_end[n] += 1 
     else:
       stream[n][stream_end[n]] = bytestream[i]
-
   # get stored values
   if stream[n][1] < 0:
     nosync = -stream[n][1]
-    count = 0
     framestart = 2
   else:
     nosync = 0
-    count = stream[n][1] >> 8
     framestart = 1
-    stream[n][1] = stream[n][1] & 255
-    
   while framestart <= stream_end[n]:
-    # check stream for x times of same bytes not FF or 7F
-    while (stream[n][framestart] != 255 and stream[n][framestart] != 127):
+    # check stream for flush
+    if (stream[n][framestart] == flush):
       if nosync:
         for col[n] in range(col[n], 3):
           out[n].write('\t')
@@ -218,30 +274,20 @@ def find_v110_frames(bslen, bytestream, n):
         row[n] += 1
         col[n] = 1
         nosync = 0
-      samebyte = stream[n][framestart]
-      for i in range(framestart+1, stream_end[n]+1):
-        if stream[n][i] == samebyte:
-          count += 1
-        else:
-          break
-      else:  # run out of bytes, return and continue counting next run
-        stream[n][1] = (count << 8) + samebyte
-        stream_end[n] = 1
-        return
-      framestart = i
-      # output so far
-      for col[n] in range(col[n], 3):
-        out[n].write('\t')
-      out[n].write(str(count+1) + ' x 0x' + '{:02X}'.format(samebyte) + ' bytes\n');
-      row[n] += 1
-      col[n] = 1
-      count = 0
-
+      if framestart == stream_end[n]:
+        stream_end[n] = 0
+      else: # there is something behind the flush - store it
+        print('something behind flush')
+        j = 0
+        for i in range(framestart+1, stream_end[n]+1):
+          j += 1
+          stream[n][j] = stream[n][i]
+        stream_end[n] = j
+      return
     # find nosynch of frames
-
-    # count and skip 0xFF
+    # count and skip 1
     for framestart in range(framestart, stream_end[n]+1):
-      if stream[n][framestart] == 255:
+      if stream[n][framestart] == 1:
         nosync += 1
       else:
         break
@@ -252,12 +298,12 @@ def find_v110_frames(bslen, bytestream, n):
       else:
         stream_end[n] = 0
         print('this is unexpected')
+        out[n].write('this is unexpected')
       return
-
-    # count 0x7F, skip all but 8
+    # count 0, skip all but 8
     eight = 0
     for framestart in range(framestart, stream_end[n]+1):
-      if stream[n][framestart] == 127:
+      if stream[n][framestart] == 0:
         eight += 1
       else:
         break
@@ -287,13 +333,15 @@ def find_v110_frames(bslen, bytestream, n):
       eight = 8
       # check for odd bytes within possible frame
       for i in range(framestart+8, stream_end[n]+1):
-        if stream[n][i] != 255 and stream[n][i] != 127:
-          # found, increase framestart and nosync and continue
+        if stream[n][i] != 1 and stream[n][i] != 0:
+          # found, increase framestart and nosync and break this for
           nosync += i - framestart
           framestart = i
-          continue
+          break
         if i >= framestart + 79:
           break
+      if stream[n][i] != 1 and stream[n][i] != 0:
+        continue #continue outside loop
       if i < framestart + 79: # not enough bytes to do something usefull, cleanup and return
         if nosync:
           stream[n][1] = -nosync # store number of nosyn bytes
@@ -308,13 +356,15 @@ def find_v110_frames(bslen, bytestream, n):
         return
       # check for other 9 other frame synch bytes
       for i in range(1, 10):                                          
-        if  stream[n][framestart+i*8] != 255: # not a frame
+        if  stream[n][framestart+i*8] != 1: # not a frame
           if i == 1:
+            print('unexpected 0 as this byte is already checked to be 1\n')
             out[n].write('unexpected 0 as this byte is already checked to be 1\n')
-            framestart += (i-1)*8 + 1 # right behind last found FF is first chance for finding 8 x 7F
-            nosync += (i-1)*8 + 1
+            framestart += 8
+            nosync += 8
           else:
-            framestart += (i-1)*8 + 1 # right behind last found FF is first chance for finding 8 x 7F
+            # right behind last found 1 is first chance for finding 8 x 0
+            framestart += (i-1)*8 + 1
             nosync += (i-1)*8 + 1
           break
       else: # end of for, no break so frame found
@@ -326,12 +376,104 @@ def find_v110_frames(bslen, bytestream, n):
           col[n] = 1
           nosync = 0
         for j in range(1, 81):
-          frame[j] = stream[n][framestart + j - 1] >> 7
+          frame[j] = stream[n][framestart + j - 1]
         check_v110_frame(frame, n)
         framestart += 80
+  # clean out of while loop, all bytes handled, zero bytes left
   stream_end[n] = 0 # just ended at the end of a frame
 
-
+flush = 2
+def rate_adaption(bslen, bytestream, n):
+  bits = []
+  nbits = 0
+  # check validity of bytes
+  for i in range(0, bslen):
+    if count[n] and bytestream[i] == samebyte[n]:
+      count[n] += 1
+      continue
+    if adaption_rate == 8:
+      if (bytestream[i] & 0x7F) != 0x7F:
+        #flush
+        bits.append(flush); nbits += 1
+        adapted_find_v110_frames(nbits, bits, n)      
+        bits = [] ; nbits = 0
+        if count[n]:
+          for col[n] in range(col[n], 3):
+            out[n].write('\t')
+          out[n].write(str(count[n]) + ' x 0x' + '{:02X}'.format(samebyte[n]) + ' bytes\n');
+          row[n] += 1
+          col[n] = 1
+        samebyte[n] = bytestream[i]
+        count[n] = 1
+      else:
+        bits.append((bytestream[i] >> 7) & 1); nbits += 1
+        if count[n]:
+          for col[n] in range(col[n], 3):
+            out[n].write('\t')
+          out[n].write(str(count[n]) + ' x 0x' + '{:02X}'.format(samebyte[n]) + ' bytes\n');
+          row[n] += 1
+          col[n] = 1
+          count[n] = 0
+    elif adaption_rate == 16:
+      if (bytestream[i] & 0x3F) != 0x3F:
+        #flush
+        bits.append(flush); nbits += 1
+        adapted_find_v110_frames(nbits, bits, n)      
+        bits = [] ; nbits = 0
+        if count[n]:
+          for col[n] in range(col[n], 3):
+            out[n].write('\t')
+          out[n].write(str(count[n]) + ' x 0x' + '{:02X}'.format(samebyte[n]) + ' bytes\n');
+          row[n] += 1
+          col[n] = 1
+        samebyte[n] = bytestream[i]
+        count[n] = 1         
+      else:
+        bits.append((bytestream[i] >> 7) & 1); nbits += 1
+        bits.append((bytestream[i] >> 6) & 1); nbits += 1
+        if count[n]:
+          for col[n] in range(col[n], 3):
+            out[n].write('\t')
+          out[n].write(str(count[n]) + ' x 0x' + '{:02X}'.format(samebyte[n]) + ' bytes\n');
+          row[n] += 1
+          col[n] = 1
+          count[n] = 0
+    elif adaption_rate == 32:
+      if (bytestream[i] & 0x0F) != 0x0F:
+        #flush
+        bits.append(flush); nbits += 1
+        adapted_find_v110_frames(nbits, bits, n)      
+        bits = [] ; nbits = 0
+        if count[n]:
+          for col[n] in range(col[n], 3):
+            out[n].write('\t')
+          out[n].write(str(count[n]) + ' x 0x' + '{:02X}'.format(samebyte[n]) + ' bytes\n');
+          row[n] += 1
+          col[n] = 1
+        samebyte[n] = bytestream[i]
+        count[n] = 1         
+      else:
+        bits.append((bytestream[i] >> 7) & 1); nbits += 1
+        bits.append((bytestream[i] >> 6) & 1); nbits += 1
+        bits.append((bytestream[i] >> 5) & 1); nbits += 1
+        bits.append((bytestream[i] >> 4) & 1); nbits += 1
+        if count[n]:
+          for col[n] in range(col[n], 3):
+            out[n].write('\t')
+          out[n].write(str(count[n]) + ' x 0x' + '{:02X}'.format(samebyte[n]) + ' bytes\n');
+          row[n] += 1
+          col[n] = 1
+          count[n] = 0
+    elif adaption_rate == 64:
+      bits.append((bytestream[i] >> 7) & 1); nbits += 1
+      bits.append((bytestream[i] >> 6) & 1); nbits += 1
+      bits.append((bytestream[i] >> 5) & 1); nbits += 1
+      bits.append((bytestream[i] >> 4) & 1); nbits += 1
+      bits.append((bytestream[i] >> 3) & 1); nbits += 1
+      bits.append((bytestream[i] >> 2) & 1); nbits += 1
+      bits.append((bytestream[i] >> 1) & 1); nbits += 1
+      bits.append(bytestream[i] & 1); nbits += 1
+  adapted_find_v110_frames(nbits, bits, n)      
 
 def read_bytes_from_QATS_file(fn):
   nx = 0
@@ -359,8 +501,10 @@ def read_bytes_from_QATS_file(fn):
     extra_length = read_t_UI8(f)
     for b in range(0, extra_length):
       read_t_UI8(f)
-    if record_lengt - 13 - extra_length == 68:
-      n = '{:04X}'.format(source_Id)
+    n = '{:04X}'.format(source_Id)
+    if a == 0:
+      bytess = list(range(200))  
+    if (n in out) or (record_lengt - 13 - extra_length == 68) and n != '1620' and n != '1630' and n != '2620' and n != '2630' and n != '1630' and n != '0E20' and n != '0E30' and n != '1630' and n != '1220' and n != '1230':
       if not (n in out):
         row[n] = 1
         col[n] = 1
@@ -376,16 +520,16 @@ def read_bytes_from_QATS_file(fn):
         out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
         nx += 1
         nn[nx] = n
+      else:
+        if (record_lengt - 13 - extra_length != 68):
+          print(n, record_lengt - 13 - extra_length)
       if row[n] != idrow[n]:
         out[n].write(str(record_number) + '\t' + str(datetime.datetime.fromtimestamp((file_Timestamp + relative_timestamp)//1000).strftime('%Y-%m-%d %H:%M:%S')) + '.%03d' % ((file_Timestamp + relative_timestamp)%1000) + '\t')
         col[n] = 3
         idrow[n] = row[n]
-      for i in range(0, 68):
-        if a == 0:
-          bytess.append(read_t_UI8(f))
-        else:  
-          bytess[i] = read_t_UI8(f)
-      find_v110_frames(68, bytess, n)
+      for i in range(0, record_lengt - 13 - extra_length):
+        bytess[i] = read_t_UI8(f)
+      rate_adaption(record_lengt - 13 - extra_length, bytess, n)
     else: # still read but not store
       for a in range(0, record_lengt - 13 - extra_length):
         read_t_UI8(f)
@@ -393,7 +537,7 @@ def read_bytes_from_QATS_file(fn):
   for i in range(0, 68):
     bytess[i] = 0
   for i in range(1, nx+1):
-    find_v110_frames(68, bytess, nn[i])
+    rate_adaption(68, bytess, nn[i])
     out[nn[i]].close()
   f.close()
 
@@ -401,7 +545,6 @@ def read_bytes_from_NetHawk_file(fn):
   nx = 0
   nn = {}
   bytess = []
-  
   f = open(fn + '.txt', 'r')
   while True:
     for line in f:
@@ -413,7 +556,7 @@ def read_bytes_from_NetHawk_file(fn):
       for i in range(0, 80):
         bytess[i] = 0
       for i in range(1, nx+1):
-        find_v110_frames(68, bytess, nn[i])
+        rate_adaption(68, bytess, nn[i])
         out[nn[i]].close()
       f.close()
       return
@@ -435,13 +578,20 @@ def read_bytes_from_NetHawk_file(fn):
         bitstream_end[n] = 0
         bitstream_max_end[n] = 0
         out[n] = open(fn + '_' + n + '.txt', 'w')
-        out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+        samebyte[n] = -1
+        count[n] = 0
+        if bit_rate%4800 == 0:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+        elif bit_rate == 2400:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t110 E4-E7\tD1-D24                  \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+        elif bit_rate == 1200:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t010 E4-E7\tD1-D12      \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+        elif bit_rate == 600:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t100 E4-E7\tD1-D6 \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
         nx += 1
         nn[nx] = n
       if row[n] != idrow[n]:
         out[n].write(str(logid) + '\t' + date[5:] + " " + time + '\t')
-        if logid == 'Id:18974':
-          print(logid)
         col[n] = 3
         idrow[n] = row[n]
       speech = f.readline()
@@ -455,8 +605,11 @@ def read_bytes_from_NetHawk_file(fn):
         for i in range(0, lines):
           line = f.readline()
           bytess.extend(map(int, bytes.fromhex(line.strip().replace(' ',''))))
-        find_v110_frames(len(bytess), bytess, n)
-"""
+        rate_adaption(len(bytess), bytess, n)
+
+
+        
+""" 
 stream = {}
 stream_end = {}
 stream_max_end = {}
@@ -467,10 +620,17 @@ out = {}
 row = {}
 col = {}
 idrow = {}
-read_bytes_from_NetHawk_file('NetHawk_trace')
+samebyte = {}
+count = {}
+bit_rate = 9600#bit/s
+adaption_rate = 16#kbit/s
+read_bytes_from_NetHawk_file('9600')
 """
-if len(argv) < 2:
-    exit('Usage: %s <filename> [<filename> [<filename> [..]]]' % argv[0])
+if len(argv) < 2 or (len(argv) == 2 and argv[1][0] == "-"):
+  exit('Usage: %s [-<baudrate>] <filename> [<filename> [<filename> [..]]]' % argv[0])
+  print ('No baudrate specified. Using default 4800.')
+bit_rate = 4800#baud
+adaption_rate = 8#kb/s
 for arg in range(1, len(argv)):
   # globals
   stream = {}
@@ -483,13 +643,47 @@ for arg in range(1, len(argv)):
   row = {}
   col = {}
   idrow = {}
-  filename, fileext = splitext(argv[arg])
-  if fileext == '.slf':
-    print('decoding %s as QATS protocol analyzer file' % argv[arg])
-    read_bytes_from_QATS_file(filename)
-  elif fileext == '.txt':
-    print('decoding %s as NetHawk protocol analyzer text output' % argv[arg]) 
-    read_bytes_from_NetHawk_file(filename)
-  else:
-    print ('%s has a unknown file extention. Skipping.' % argv[arg])
-    
+  samebyte = {}
+  count = {}
+  if arg == 1 and argv[1][0] == "-":
+    if -int(argv[1]) in [50, 75, 110, 150, 200, 300, 600]:
+      bit_rate = 600
+      adaption_rate = 8
+      print("Using 600 V.110 bit rate within 8k to 64k bit rate adaption.")
+    elif -int(argv[1]) == 1200:
+      bit_rate = 1200
+      adaption_rate = 8
+      #print("Using 1200 V.110 bit rate within 8k to 64k bit rate adaption.")
+    elif -int(argv[1]) == 2400:
+      bit_rate = 2400
+      adaption_rate = 8
+      #print("Using 3400 V.110 bit rate within 8k to 64k bit rate adaption.")
+    elif -int(argv[1]) in [3600, 4800]:
+      bit_rate = 4800
+      adaption_rate = 8
+      #print("Using n x 4800 V.110 bit rate within 8k to 64k bit rate adaption.")
+    elif -int(argv[1]) in [7200, 9600]:
+      bit_rate = 9600
+      adaption_rate = 16
+      #print("Using n x 4800 V.110 bit rate within 16k to 64k bit rate adaption.")
+    elif -int(argv[1]) in [12000, 14400, 19200]:
+      bit_rate = 19200
+      adaption_rate = 32
+      #print("Using n x 4800 V.110 bit rate within 32k to 64k bit rate adaption.")
+    elif -int(argv[1]) in [24000, 28800, 38400]:
+      bit_rate = 38400
+      adaption_rate = 64
+      #print("Using n x 4800 V.110 bit rate within 64k to 64k bit rate adaption.")
+    else:
+      print ('%s specifies a unknown baudrate. Using default 4800.' % argv[arg])
+  else:         
+    filename, fileext = splitext(argv[arg])
+    if fileext == '.slf':
+      print('decoding %s as QATS protocol analyzer file' % argv[arg])
+      read_bytes_from_QATS_file(filename)
+    elif fileext == '.txt':
+      print('decoding %s as NetHawk protocol analyzer text output' % argv[arg]) 
+      read_bytes_from_NetHawk_file(filename)
+    else:
+      print ('%s has a unknown file extention. Skipping.' % argv[arg])
+  
