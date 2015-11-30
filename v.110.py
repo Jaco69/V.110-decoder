@@ -516,6 +516,8 @@ def read_bytes_from_QATS_file(fn):
         bitstream[n] = []
         bitstream_end[n] = 0
         bitstream_max_end[n] = 0
+        samebyte[n] = -1
+        count[n] = 0
         out[n] = open(fn + '_' + n + '.txt', 'w')
         out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
         nx += 1
