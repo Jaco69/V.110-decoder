@@ -4,7 +4,7 @@ Python3 decoder script for raw 4800 baud transparant data PCM data to V.110 fram
 v.110.py reads files and interprets the data in each file as V.110 data
 By file extenttion will tell the type of file. At the moment .tt is interpreted as NetHawk text output and .slf as QATS binairy output
 
-The baudrate can be set Usage: python v.110.py [-\<baudrate\>] \<filename\> [\<filename\> [\<filename\> [..]]]
+The baudrate can be set Usage: python v.110.py [-\<baudrate\>] \<filename\> [\<filename\>][..]
 
 The next functions are steps refine the data and then call the function below
 
