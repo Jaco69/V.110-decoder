@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# https://github.com/Jaco69/V.110-decoder
 from sys import argv
 from sys import exit
 from os.path import splitext
