@@ -27,9 +27,28 @@ def read_t_UI64(f):
   return (next(read_byte(f)) + (next(read_byte(f)) << 8) + (next(read_byte(f)) << 16) + (next(read_byte(f)) << 24)
           + (next(read_byte(f)) << 32) + (next(read_byte(f)) << 40) + (next(read_byte(f)) << 48) + (next(read_byte(f)) << 56))
 
+
+def hdlc(hdlcbytes, n):
+  if bytestream_max_end[n] < bytestream_end[n] + len(hdlcbytes):
+    for bytestream_max_end[n] in range(bytestream_max_end[n], bytestream_end[n] + len(hdlcbytes)):
+      bytestream[n].append(0)
+  for i in range(0, len(v110bytes)):
+    bytestream[n][bytestream_end[n]] = hdlcbytes[i]  
+    stream_end[n] += 1
+  # hdlc frames start and end with 7E
+  # so throw away everything before the first 7E
+  while bytestream[n][0] != 0x7E:
+    for i in range(0, bytestream_end[n]):
+      bytestream[n][i] = bytestream[n][i]+1
+    bytestream_end[n] -= 1
+  # check for second 7E
+  for i in range(1, bytestream_end[n]+1):
+    if bytestream[n][i] == 0x7E:
+      break;
+      
 def check_bitstream(b, n):
   if (bit_rate%4800 == 0):
-    if bitstream_end[n] + 48 > bitstream_max_end[n]:
+    if bitstream_max_end[n] < bitstream_end[n] + 48:
       for bitstream_max_end[n] in range(bitstream_max_end[n], bitstream_end[n] + 48):
         bitstream[n].append(0)
     bitstream[n][bitstream_end[n]] = b[1*8+2] ; bitstream_end[n] += 1
@@ -210,24 +229,27 @@ def check_bitstream(b, n):
   if len(bb) > 0:
     for col[n] in range(col[n], 16):
       out[n].write('\t')
-    out[n].write('"')
-    for i in bb:
-      if chr(i) in string.printable:
-        if chr(i) == '\t':
-          out[n].write('\\t')
-        elif chr(i) == '\n':  
-          out[n].write('\\n')
-        elif chr(i) == '\r':  
-          out[n].write('\\r')
-        elif chr(i) == '\x0b':  
-          out[n].write('\\x0b')
-        elif chr(i) == '\x0c':  
-          out[n].write('\\x0c')
+    if decode_ascii:  
+      out[n].write('"')
+      for i in bb:
+        if chr(i) in string.printable:
+          if chr(i) == '\t':
+            out[n].write('\\t')
+          elif chr(i) == '\n':  
+            out[n].write('\\n')
+          elif chr(i) == '\r':  
+            out[n].write('\\r')
+          elif chr(i) == '\x0b':  
+            out[n].write('\\x0b')
+          elif chr(i) == '\x0c':  
+            out[n].write('\\x0c')
+          else:
+            out[n].write(chr(i))      
         else:
-          out[n].write(chr(i))      
-      else:
-        out[n].write('\\x' + '{:02x}'.format(i))
-    out[n].write('"')  
+          out[n].write('\\x' + '{:02x}'.format(i))
+      out[n].write('"')
+    if decode_hdlc:
+      hdlc(bb, n)
   
 def check_v110_frame(f, n):
   for col[n] in range(col[n], 3):
@@ -271,7 +293,7 @@ def adapted_find_v110_frames(bslen, bytestream, n):
       if nosync:
         for col[n] in range(col[n], 3):
           out[n].write('\t')
-        out[n].write(str(nosync) + ' bytes of nosync\n')
+        out[n].write(str(nosync) + ' bits of nosync\n')
         row[n] += 1
         col[n] = 1
         nosync = 0
@@ -372,7 +394,7 @@ def adapted_find_v110_frames(bslen, bytestream, n):
         if nosync: # end of nosynch found
           for col[n] in range(col[n], 3):
             out[n].write('\t')
-          out[n].write(str(nosync) + ' bytes of nosync \n')
+          out[n].write(str(nosync) + ' bits of nosync \n')
           row[n] += 1
           col[n] = 1
           nosync = 0
@@ -477,9 +499,26 @@ def rate_adaption(bslen, bytestream, n):
   adapted_find_v110_frames(nbits, bits, n)      
 
 def read_bytes_from_QATS_file(fn):
-  nx = 0
-  nn = {}
-  bytess = []
+  global nx
+  global nn
+  global bytess
+  global stream
+  global stream_end
+  global stream_max_end
+  global bitstream
+  global bitstream_end
+  global bitstream_max_end
+  global bytestream
+  global bytestream_end
+  global bytestream_max_end
+  global out
+  global row
+  global col
+  global idrow
+  global samebyte
+  global count
+  global linetime
+
   f = open(fn + '.slf', 'rb', 99999)
   if read_t_UI32(f) != 4294901808:
     print('magic number not slf version3: 3000 FFFF')
@@ -495,7 +534,7 @@ def read_bytes_from_QATS_file(fn):
   for a in range(0,  extra_length):
     read_t_UI8(f)
   for a in range(0, records_in_file):
-    record_lengt = read_t_UI16(f)
+    record_length = read_t_UI16(f)
     source_Id = read_t_UI16(f)
     record_number = read_t_UI32(f)
     relative_timestamp = read_t_UI32(f)
@@ -504,8 +543,10 @@ def read_bytes_from_QATS_file(fn):
       read_t_UI8(f)
     n = '{:04X}'.format(source_Id)
     if a == 0:
-      bytess = list(range(200))  
-    if (n in out) or (record_lengt - 13 - extra_length == 68) and n != '1620' and n != '1630' and n != '2620' and n != '2630' and n != '1630' and n != '0E20' and n != '0E30' and n != '1630' and n != '1220' and n != '1230':
+      bytess = list(range(200))
+      for n in out:
+        linetime[n] = 0
+    if (record_length - 13 - extra_length == 68):
       if not (n in out):
         row[n] = 1
         col[n] = 1
@@ -517,50 +558,70 @@ def read_bytes_from_QATS_file(fn):
         bitstream[n] = []
         bitstream_end[n] = 0
         bitstream_max_end[n] = 0
+        bytestream[n] = []
+        bytestream_end[n] = 0
+        bytestream_max_end[n] = 0
+        out[n] = open(fn + '_' + n + '.txt', 'w')
         samebyte[n] = -1
         count[n] = 0
-        out[n] = open(fn + '_' + n + '.txt', 'w')
-        out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+        if bit_rate%4800 == 0:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 2400:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t110 E4-E7\tD1-D24                  \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 1200:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t010 E4-E7\tD1-D12      \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 600:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t100 E4-E7\tD1-D6 \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        if decode_ascii:
+          out[n].write('\tASCII')
+        if decode_hdlc:
+          out[n].write('\tDHCL')
+        out[n].write('\n')          
         nx += 1
         nn[nx] = n
-      else:
-        if (record_lengt - 13 - extra_length != 68):
-          print(n, record_lengt - 13 - extra_length)
-      if row[n] != idrow[n]:
-        out[n].write(str(record_number) + '\t' + str(datetime.datetime.fromtimestamp((file_Timestamp + relative_timestamp)//1000).strftime('%Y-%m-%d %H:%M:%S')) + '.%03d' % ((file_Timestamp + relative_timestamp)%1000) + '\t')
-        col[n] = 3
-        idrow[n] = row[n]
-      for i in range(0, record_lengt - 13 - extra_length):
+        linetime[n] = 0
+      for i in range(0, record_length - 13 - extra_length):
         bytess[i] = read_t_UI8(f)
-      rate_adaption(record_lengt - 13 - extra_length, bytess, n)
-    else: # still read but not store
-      for a in range(0, record_lengt - 13 - extra_length):
+      if (relative_timestamp > linetime[n]): # filter out weird stuff
+        if row[n] != idrow[n]:
+          out[n].write(str(record_number) + '\t' + str(datetime.datetime.fromtimestamp((file_Timestamp + relative_timestamp)//1000).strftime('%Y-%m-%d %H:%M:%S')) + '.%03d' % ((file_Timestamp + relative_timestamp)%1000) + '\t')
+          col[n] = 3
+          idrow[n] = row[n]
+        rate_adaption(record_length - 13 - extra_length, bytess, n)
+        linetime[n] = relative_timestamp
+      #else:
+        #print(n + '\t' + str(record_number) + '\t' + str(datetime.datetime.fromtimestamp((file_Timestamp + relative_timestamp)//1000).strftime('%Y-%m-%d %H:%M:%S')) + '.%03d' % ((file_Timestamp + relative_timestamp)%1000) + '\t' + str(datetime.datetime.fromtimestamp((file_Timestamp + linetime[n])//1000).strftime('%Y-%m-%d %H:%M:%S')) + '.%03d' % ((file_Timestamp + linetime[n])%1000))			
+    else: # still read but do not store
+      for a in range(0, record_length - 13 - extra_length):
         read_t_UI8(f)
-  print('\nend\n');
-  for i in range(0, 68):
-    bytess[i] = 0
-  for i in range(1, nx+1):
-    rate_adaption(68, bytess, nn[i])
-    out[nn[i]].close()
   f.close()
 
 def read_bytes_from_NetHawk_file(fn):
-  nx = 0
-  nn = {}
-  bytess = []
+  global nx
+  global nx
+  global nn
+  global bytess
+  global stream
+  global stream_end
+  global stream_max_end
+  global bitstream
+  global bitstream_end
+  global bitstream_max_end
+  global bytestream
+  global bytestream_end
+  global bytestream_max_end
+  global out
+  global row
+  global col
+  global idrow
+  global samebyte
+  global count
   f = open(fn + '.txt', 'r')
   while True:
     for line in f:
       if 'PCM ' in line:
         break
     else: # end of file
-      print("\nend\n")
-      # flush
-      for i in range(0, 80):
-        bytess[i] = 0
-      for i in range(1, nx+1):
-        rate_adaption(68, bytess, nn[i])
-        out[nn[i]].close()
       f.close()
       return
     d1, n, d2, d3, ctype, logid, date, time = line.split()
@@ -580,17 +641,25 @@ def read_bytes_from_NetHawk_file(fn):
         bitstream[n] = []
         bitstream_end[n] = 0
         bitstream_max_end[n] = 0
+        bytestream[n] = []
+        bytestream_end[n] = 0
+        bytestream_max_end[n] = 0
         out[n] = open(fn + '_' + n + '.txt', 'w')
         samebyte[n] = -1
         count[n] = 0
         if bit_rate%4800 == 0:
-          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
         elif bit_rate == 2400:
-          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t110 E4-E7\tD1-D24                  \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t110 E4-E7\tD1-D24                  \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
         elif bit_rate == 1200:
-          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t010 E4-E7\tD1-D12      \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t010 E4-E7\tD1-D12      \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
         elif bit_rate == 600:
-          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t100 E4-E7\tD1-D6 \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t\tascii\n')
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t100 E4-E7\tD1-D6 \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        if decode_ascii:
+          out[n].write('\tASCII')
+        if decode_hdlc:
+          out[n].write('\tDHCL')
+        out[n].write('\n')          
         nx += 1
         nn[nx] = n
       if row[n] != idrow[n]:
@@ -619,6 +688,9 @@ stream_max_end = {}
 bitstream = {}
 bitstream_end = {}
 bitstream_max_end = {}
+bytestream = {}
+bytestream_end = {}
+bytestream_max_end = {}
 out = {}
 row = {}
 col = {}
@@ -634,51 +706,69 @@ if len(argv) < 2 or (len(argv) == 2 and argv[1][0] == "-"):
   print ('No baudrate specified. Using default 4800.')
 bit_rate = 4800#baud
 adaption_rate = 8#kb/s
+stitch = False
+decode_ascii = False
+decode_hdlc = False
+
 for arg in range(1, len(argv)):
-  # globals
-  stream = {}
-  stream_end = {}
-  stream_max_end = {}
-  bitstream = {}
-  bitstream_end = {}
-  bitstream_max_end = {}
-  out = {}
-  row = {}
-  col = {}
-  idrow = {}
-  samebyte = {}
-  count = {}
-  if arg == 1 and argv[1][0] == "-":
-    if -int(argv[1]) in [50, 75, 110, 150, 200, 300, 600]:
+  if not stitch: 
+    # globals
+    nx = 0
+    nn = {}
+    bytess = []
+    linetime = {}
+    stream = {}
+    stream_end = {}
+    stream_max_end = {}
+    bitstream = {}
+    bitstream_end = {}
+    bitstream_max_end = {}
+    bytestream = {}
+    bytestream_end = {}
+    bytestream_max_end = {}
+    out = {}
+    row = {}
+    col = {}
+    idrow = {}
+    samebyte = {}
+    count = {}
+  if  argv[arg][0] == "-":
+    if argv[arg] == '-stitch':
+      stitch = True
+    elif argv[arg] == '-ascii':
+      decode_ascii = True
+    elif argv[arg] == '-hdlc':
+      decode_hdlc = True
+    elif -int(argv[arg]) in [50, 75, 110, 150, 200, 300, 600]:
       bit_rate = 600
       adaption_rate = 8
-      print("Using 600 V.110 bit rate within 8k to 64k bit rate adaption.")
-    elif -int(argv[1]) == 1200:
+      #print("Using 600 V.110 bit rate within 8k to 64k bit rate adaption.")
+    elif -int(argv[arg]) == 1200:
       bit_rate = 1200
       adaption_rate = 8
       #print("Using 1200 V.110 bit rate within 8k to 64k bit rate adaption.")
-    elif -int(argv[1]) == 2400:
+    elif -int(argv[arg]) == 2400:
       bit_rate = 2400
       adaption_rate = 8
       #print("Using 3400 V.110 bit rate within 8k to 64k bit rate adaption.")
-    elif -int(argv[1]) in [3600, 4800]:
+    elif -int(argv[arg]) in [3600, 4800]:
       bit_rate = 4800
       adaption_rate = 8
       #print("Using n x 4800 V.110 bit rate within 8k to 64k bit rate adaption.")
-    elif -int(argv[1]) in [7200, 9600]:
+    elif -int(argv[arg]) in [7200, 9600]:
       bit_rate = 9600
       adaption_rate = 16
       #print("Using n x 4800 V.110 bit rate within 16k to 64k bit rate adaption.")
-    elif -int(argv[1]) in [12000, 14400, 19200]:
+    elif -int(argv[arg]) in [12000, 14400, 19200]:
       bit_rate = 19200
       adaption_rate = 32
       #print("Using n x 4800 V.110 bit rate within 32k to 64k bit rate adaption.")
-    elif -int(argv[1]) in [24000, 28800, 38400]:
+    elif -int(argv[arg]) in [24000, 28800, 38400]:
       bit_rate = 38400
       adaption_rate = 64
       #print("Using n x 4800 V.110 bit rate within 64k to 64k bit rate adaption.")
     else:
-      print ('%s specifies a unknown baudrate. Using default 4800.' % argv[arg])
+      print ('%s specifies a unknown option. Using default 4800.' % argv[arg])
   else:         
     filename, fileext = splitext(argv[arg])
     if fileext == '.slf':
@@ -689,4 +779,23 @@ for arg in range(1, len(argv)):
       read_bytes_from_NetHawk_file(filename)
     else:
       print ('%s has a unknown file extention. Skipping.' % argv[arg])
+  if not stitch: 
+    # flush
+    print('end\n');
+    bytess = list(range(80))
+    for i in range(0, 80):
+      bytess[i] = 0
+    for i in range(1, nx+1):
+      rate_adaption(80, bytess, nn[i])
+      out[nn[i]].close()
+if stitch: 
+  # flush
+  print('end\n');
+  bytess = list(range(80))
+  for i in range(0, 80):
+    bytess[i] = 0
+  for i in range(1, nx+1):
+    rate_adaption(80, bytess, nn[i])
+    out[nn[i]].close()
+
   
