@@ -415,7 +415,7 @@ def rate_adaption(bslen, bytestream, n):
       count[n] += 1
       continue
     if adaption_rate == 8:
-      if (mask_check and bytestream[i] & 0x7F) != 0x7F:
+      if mask_check and (bytestream[i] & 0x7F) != 0x7F:
         #flush
         bits.append(flush); nbits += 1
         adapted_find_v110_frames(nbits, bits, n)      
@@ -438,7 +438,7 @@ def rate_adaption(bslen, bytestream, n):
           col[n] = 1
           count[n] = 0
     elif adaption_rate == 16:
-      if (mask_check and bytestream[i] & 0x3F) != 0x3F:
+      if mask_check and (bytestream[i] & 0x3F) != 0x3F:
         #flush
         bits.append(flush); nbits += 1
         adapted_find_v110_frames(nbits, bits, n)      
@@ -462,7 +462,7 @@ def rate_adaption(bslen, bytestream, n):
           col[n] = 1
           count[n] = 0
     elif adaption_rate == 32:
-      if (mask_check and bytestream[i] & 0x0F) != 0x0F:
+      if mask_check and (bytestream[i] & 0x0F) != 0x0F:
         #flush
         bits.append(flush); nbits += 1
         adapted_find_v110_frames(nbits, bits, n)      
@@ -782,15 +782,15 @@ for arg in range(1, len(argv)):
       read_bytes_from_NetHawk_file(filename)
     else:
       print ('%s has a unknown file extention. Skipping.' % argv[arg])
-  if not stitch: 
-    # flush
-    print('end\n');
-    bytess = list(range(80))
-    for i in range(0, 80):
-      bytess[i] = 0
-    for i in range(1, nx+1):
-      rate_adaption(80, bytess, nn[i])
-      out[nn[i]].close()
+    if not stitch: 
+      # flush
+      print('end\n');
+      bytess = list(range(80))
+      for i in range(0, 80):
+        bytess[i] = 0
+      for i in range(1, nx+1):
+        rate_adaption(80, bytess, nn[i])
+        out[nn[i]].close()
 if stitch: 
   # flush
   print('end\n');
