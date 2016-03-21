@@ -415,7 +415,7 @@ def rate_adaption(bslen, bytestream, n):
       count[n] += 1
       continue
     if adaption_rate == 8:
-      if (bytestream[i] & 0x7F) != 0x7F:
+      if (mask_check and bytestream[i] & 0x7F) != 0x7F:
         #flush
         bits.append(flush); nbits += 1
         adapted_find_v110_frames(nbits, bits, n)      
@@ -438,7 +438,7 @@ def rate_adaption(bslen, bytestream, n):
           col[n] = 1
           count[n] = 0
     elif adaption_rate == 16:
-      if (bytestream[i] & 0x3F) != 0x3F:
+      if (mask_check and bytestream[i] & 0x3F) != 0x3F:
         #flush
         bits.append(flush); nbits += 1
         adapted_find_v110_frames(nbits, bits, n)      
@@ -462,7 +462,7 @@ def rate_adaption(bslen, bytestream, n):
           col[n] = 1
           count[n] = 0
     elif adaption_rate == 32:
-      if (bytestream[i] & 0x0F) != 0x0F:
+      if (mask_check and bytestream[i] & 0x0F) != 0x0F:
         #flush
         bits.append(flush); nbits += 1
         adapted_find_v110_frames(nbits, bits, n)      
@@ -709,6 +709,7 @@ adaption_rate = 8#kb/s
 stitch = False
 decode_ascii = False
 decode_hdlc = False
+mask_check = True
 
 for arg in range(1, len(argv)):
   if not stitch: 
@@ -733,12 +734,14 @@ for arg in range(1, len(argv)):
     samebyte = {}
     count = {}
   if  argv[arg][0] == "-":
-    if argv[arg] == '-stitch':
+    if argv[arg] == '-stitch': # stitch the input files togeter and handle as 1 continues input 
       stitch = True
-    elif argv[arg] == '-ascii':
+    elif argv[arg] == '-ascii': # decode payload as ASCII
       decode_ascii = True
-    elif argv[arg] == '-hdlc':
+    elif argv[arg] == '-hdlc': # decode payload as HDLC
       decode_hdlc = True
+    elif argv[arg] == '-nomaskcheck': # ignore masked out bits in rate adaptation
+      mask_check = False      
     elif -int(argv[arg]) in [50, 75, 110, 150, 200, 300, 600]:
       bit_rate = 600
       adaption_rate = 8
