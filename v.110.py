@@ -679,36 +679,242 @@ def read_bytes_from_NetHawk_file(fn):
           bytess.extend(map(int, bytes.fromhex(line.strip().replace(' ',''))))
         rate_adaption(len(bytess), bytess, n)
 
+def read_bytes_from_packet_Abis_file(fn):
+  global nx
+  global nx
+  global nn
+  global bytess
+  global stream
+  global stream_end
+  global stream_max_end
+  global bitstream
+  global bitstream_end
+  global bitstream_max_end
+  global bytestream
+  global bytestream_end
+  global bytestream_max_end
+  global out
+  global row
+  global col
+  global idrow
+  global samebyte
+  global count
+  f = open(fn + '.txt', 'r')
+  while True:
+    for line in f:
+      if 'No.     Time' in line:
+        break
+    else: # end of file
+      f.close()
+      return
+    line = f.readline() # read line after header line
+    d = line.split()
+    logid = d[0]
+    date = d[1]
+    time = d[2]
+    source = d[3]
+    destination = d[4]
+    protocol = d[5]
+    length = d[6]
+    if protocol == "UDP" and length == "87":
+      for line in f:
+        if '[Stream index:' in line:
+          (d1, d2, d3) = line.split()
+          streamn = d3.replace(']','')
+          n = "_stream" + streamn + "_" + source
+          break
+      for line in f:
+        if 'Data' in line:
+          break;
+      if not 'Data (45 bytes)' in line:
+        break;            
 
+      if not (n in out):
+        row[n] = 1
+        col[n] = 1
+        idrow[n] = 0
+        stream[n] = []
+        stream[n].append(0)
+        stream_end[n] = 0
+        stream_max_end[n] = 0
+        bitstream[n] = []
+        bitstream_end[n] = 0
+        bitstream_max_end[n] = 0
+        bytestream[n] = []
+        bytestream_end[n] = 0
+        bytestream_max_end[n] = 0
+        out[n] = open(fn + '_' + n + '.txt', 'w')
+        samebyte[n] = -1
+        count[n] = 0
+        if bit_rate%4800 == 0:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 2400:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t110 E4-E7\tD1-D24                  \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 1200:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t010 E4-E7\tD1-D12      \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 600:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t100 E4-E7\tD1-D6 \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        if decode_ascii:
+          out[n].write('\tASCII')
+        if decode_hdlc:
+          out[n].write('\tDHCL')
+        out[n].write('\n')          
+        nx += 1
+        nn[nx] = n
+      if row[n] != idrow[n]:
+        out[n].write(str(logid) + '\t' + date + " " + time + '\t')
+        col[n] = 3
+        idrow[n] = row[n]
+
+      bytess = []
+      line = f.readline() # skip empty line after 'Data (45 bytes)' line
+      
+      line = f.readline()
+      b = line.split()
+      bytess.append(0)
+      bytess.extend([int(i, 16) for i in b[10:17]])
+      line = f.readline()
+      b = line.split()
+      bytess.extend([int(i, 16) for i in b[1:3]])
+      if bit_rate >= 9600:
+        bytess.append(0)
+        bytess.extend([int(i, 16) for i in b[3:12]])
+      bytess.append(0)
+      bytess.extend([int(i, 16) for i in b[12:17]])
+      line = f.readline()
+      b = line.split()
+      bytess.extend([int(i, 16) for i in b[1:5]])
+      if bit_rate >= 9600:
+        bytess.append(0)
+        bytess.extend([int(i, 16) for i in b[5:14]])
+
+      rate_adaption(len(bytess), bytess, n)
         
-""" 
-stream = {}
-stream_end = {}
-stream_max_end = {}
-bitstream = {}
-bitstream_end = {}
-bitstream_max_end = {}
-bytestream = {}
-bytestream_end = {}
-bytestream_max_end = {}
-out = {}
-row = {}
-col = {}
-idrow = {}
-samebyte = {}
-count = {}
-bit_rate = 9600#bit/s
-adaption_rate = 16#kbit/s
-read_bytes_from_NetHawk_file('9600')
-"""
+def read_bytes_from_mgw_flip_file(fn):
+  global nx
+  global nx
+  global nn
+  global bytess
+  global stream
+  global stream_end
+  global stream_max_end
+  global bitstream
+  global bitstream_end
+  global bitstream_max_end
+  global bytestream
+  global bytestream_end
+  global bytestream_max_end
+  global out
+  global row
+  global col
+  global idrow
+  global samebyte
+  global count
+  
+  f = open(fn + '.txt', 'r')
+  while True:
+    for line in f:
+      if 'No.     Time' in line:
+        break
+    else: # end of file
+      f.close()
+      return
+    line = f.readline() # read line after header line
+    d = line.split()
+    logid = d[0]
+    date = d[1]
+    time = d[2]
+    source = d[3].replace(':','')
+    destination = d[4]
+    protocol = d[5]
+    length = d[6]
+    if protocol == "FLIP" and (length == "118" or length == "278"): # 38+x*80
+      for line in f:
+        if 'NSN FLIP, FlowID' in line:
+          (d1, d2, d3, d4) = line.split()
+          streamn = d4
+          n = "_FlowID" + streamn + "_" + source
+          break
+      for line in f:
+        if 'Data' in line:
+          break;
+      if not 'Data (' in line:
+        break;            
+
+      if not (n in out):
+        row[n] = 1
+        col[n] = 1
+        idrow[n] = 0
+        stream[n] = []
+        stream[n].append(0)
+        stream_end[n] = 0
+        stream_max_end[n] = 0
+        bitstream[n] = []
+        bitstream_end[n] = 0
+        bitstream_max_end[n] = 0
+        bytestream[n] = []
+        bytestream_end[n] = 0
+        bytestream_max_end[n] = 0
+        out[n] = open(fn + '_' + n + '.txt', 'w')
+        samebyte[n] = -1
+        count[n] = 0
+        if bit_rate%4800 == 0:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t011 E4-E7\tD1-D48                                          \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 2400:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t110 E4-E7\tD1-D24                  \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 1200:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t010 E4-E7\tD1-D12      \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        elif bit_rate == 600:
+          out[n].write('log id\ttime\tdata kind\tSA 1.3.6.8\tSB 4.9\tX 2.7\t100 E4-E7\tD1-D6 \tbyte1\tbyte2\tbyte3\tbyte4\tbyte5\t\t')
+        if decode_ascii:
+          out[n].write('\tASCII')
+        if decode_hdlc:
+          out[n].write('\tDHCL')
+        out[n].write('\n')          
+        nx += 1
+        nn[nx] = n
+      if row[n] != idrow[n]:
+        out[n].write(str(logid) + '\t' + date + " " + time + '\t')
+        col[n] = 3
+        idrow[n] = row[n]
+        
+      bytess = []
+      byte16 = int(line.replace("Data (", "").replace(" bytes)", ""))//16
+      line = f.readline() # skip empty line after 'Data (xx bytes)' line
+      for l in range(0, byte16+1):
+        line = f.readline()
+        b = line.split()
+        if l == 0:
+          bytess.extend([int(i, 16) for i in b[13:17]])
+        elif l == byte16:
+          bytess.extend([int(i, 16) for i in b[1:13]])
+        else:
+          bytess.extend([int(i, 16) for i in b[1:17]])
+
+      rate_adaption(len(bytess), bytess, n)
+        
+        
 if len(argv) < 2 or (len(argv) == 2 and argv[1][0] == "-"):
-  exit('Usage: %s [-<baudrate>] <filename> [<filename> [<filename> [..]]]' % argv[0])
+  exit('''Usage: %s [<option> [<option> [..]]] <filename> [<filename> [<filename> [..]]]
+  
+      Options: -<baudrate>  : # specify baudrate as one in: 50, 75, 110, 150, 200, 300, 600, 1200, 2400, 3600, 4800, 7200, 9600, 
+                                                            12000, 14400, 19200, 24000, 28800, 38400
+               -ascii       : # decode payload as ASCII
+               -hdlc        : # decode payload as HDLC
+               -nomaskcheck : # ignore masked out bits in rate adaptation
+               -abis        : # Abis WireShark as plain text saved packet dissections input
+               -flip        : # MGW flip WireShark as plain text saved packet dissections input
+               -stitch      : # stitch the input files togeter and handle as 1 continues input
+      The input is a .slf QATS file or .txt Nethawk file with E1 data or .txt packet Abis wireshark file
+      The output filenames have input filename plus timeslot or stream. Output has tab seperated fields for dropping in excel''' % argv[0])
   print ('No baudrate specified. Using default 4800.')
 bit_rate = 4800#baud
 adaption_rate = 8#kb/s
 stitch = False
 decode_ascii = False
 decode_hdlc = False
+input_is_abis = False
+input_is_flip = False
 mask_check = True
 
 for arg in range(1, len(argv)):
@@ -740,6 +946,11 @@ for arg in range(1, len(argv)):
       decode_ascii = True
     elif argv[arg] == '-hdlc': # decode payload as HDLC
       decode_hdlc = True
+    elif argv[arg] == '-abis': # Abis WireShark as plain text saved packet dissections input
+      input_is_abis = True
+      adaption_rate = 64
+    elif argv[arg] == '-flip': # MGW flip WireShark as plain text saved packet dissections input
+      input_is_flip = True
     elif argv[arg] == '-nomaskcheck': # ignore masked out bits in rate adaptation
       mask_check = False      
     elif -int(argv[arg]) in [50, 75, 110, 150, 200, 300, 600]:
@@ -773,13 +984,22 @@ for arg in range(1, len(argv)):
     else:
       print ('%s specifies a unknown option. Using default 4800.' % argv[arg])
   else:         
+    if input_is_abis:
+      adaption_rate = 64
     filename, fileext = splitext(argv[arg])
     if fileext == '.slf':
       print('decoding %s as QATS protocol analyzer file' % argv[arg])
       read_bytes_from_QATS_file(filename)
     elif fileext == '.txt':
-      print('decoding %s as NetHawk protocol analyzer text output' % argv[arg]) 
-      read_bytes_from_NetHawk_file(filename)
+      if input_is_abis:
+        print('decoding %s as WireShark plain text saved packet dissections of packet Abis trace' % argv[arg]) 
+        read_bytes_from_packet_Abis_file(filename)
+      elif input_is_flip:
+        print('decoding %s as WireShark plain text saved packet dissections of MGW flip trace' % argv[arg]) 
+        read_bytes_from_mgw_flip_file(filename)
+      else:
+        print('decoding %s as NetHawk protocol analyzer text output' % argv[arg]) 
+        read_bytes_from_NetHawk_file(filename)
     else:
       print ('%s has a unknown file extention. Skipping.' % argv[arg])
     if not stitch: 
@@ -802,3 +1022,26 @@ if stitch:
     out[nn[i]].close()
 
   
+"""
+program reads bytes from different file inputs
+gets the V.110 bitstream from those bytes
+gets v.110 errors or synchronizes on the v.110 bitstream and gets the data bit stream
+gets bytes from data bit stream
+optionally displays HLDC commands or ASCII  
+
+V.110 frame format:
+Octet 	Bit number						
+No.								
+	0	1	2	3	4	5	6	7
+0	0	0	0	0	0	0	0	0
+1	1	D1	D2	D3	D4	D5	D6	S1
+2	1	D7	D8	D9	D10	D11	D12	X
+3	1	D13	D14	D15	D16	D17	D18	S3
+4	1	D19	D20	D21	D22	D23	D24	S4
+5	1	E1	E2	E3	E4	E5	E6	E7
+6	1	D25	D26	D27	D28	D29	D30	S6
+7	1	D31	D32	D33	D34	D35	D36	X
+8	1	D37	D38	D39	D40	D41	D42	S8
+9	1	D43	D44	D45	D46	D47	D48	S9
+"""
+
